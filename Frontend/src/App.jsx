@@ -706,7 +706,7 @@ function App() {
             <Search size={16} color="var(--text-secondary)" />
             <input 
               type="text" 
-              placeholder="Search files or collections..." 
+              placeholder="Search documents..." 
               style={appStyles.searchInput}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}

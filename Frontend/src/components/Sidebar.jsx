@@ -393,21 +393,6 @@ export function Sidebar({
           <span>AI Chat Q&A</span>
         </button>
 
-        <button 
-          style={styles.navItem}
-          onClick={() => alert('Collections and folders are a Pro feature coming soon!')}
-        >
-          <Layers size={16} />
-          <span>Collections</span>
-        </button>
-
-        <button 
-          style={styles.navItem}
-          onClick={() => alert('Settings module is currently locked in preview.')}
-        >
-          <Settings size={16} />
-          <span>Settings</span>
-        </button>
       </div>
 
       {/* Upload Box */}
