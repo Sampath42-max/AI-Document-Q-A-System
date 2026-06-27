@@ -17,58 +17,17 @@ class LoginRequest(BaseModel):
 
 @router.post("/auth/signup")
 async def signup(request: SignupRequest):
-    if not request.email or not request.password or not request.name:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Name, email and password are required"
-        )
-    
-    try:
-        user_data = create_db_user(
-            email=request.email.strip().lower(),
-            password=request.password,
-            name=request.name.strip()
-        )
-        if not user_data:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Email is already registered"
-            )
-        return user_data
-    except HTTPException as he:
-        raise he
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Registration failed: {str(e)}"
-        )
+    raise HTTPException(
+        status_code=status.HTTP_400_BAD_REQUEST,
+        detail="Standard registration is disabled. Only Google Auth is supported."
+    )
 
 @router.post("/auth/login")
 async def login(request: LoginRequest):
-    if not request.email or not request.password:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Email and password are required"
-        )
-        
-    try:
-        user_data = authenticate_db_user(
-            email=request.email.strip().lower(),
-            password=request.password
-        )
-        if not user_data:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid email or password"
-            )
-        return user_data
-    except HTTPException as he:
-        raise he
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Login failed: {str(e)}"
-        )
+    raise HTTPException(
+        status_code=status.HTTP_400_BAD_REQUEST,
+        detail="Standard login is disabled. Only Google Auth is supported."
+    )
 
 class GoogleLoginRequest(BaseModel):
     credential: str

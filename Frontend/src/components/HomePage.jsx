@@ -344,30 +344,10 @@ export function HomePage({ onLoginSuccess, theme, toggleTheme, Sun, Moon }) {
         </p>
 
         {/* Login Card */}
-        <div className="glass-card auth-card">
-          <div style={styles.tabContainer}>
-            <button 
-              type="button"
-              style={{
-                ...styles.tabBtn,
-                color: activeTab === 'login' ? 'var(--text-primary)' : 'var(--text-muted)',
-                borderBottom: activeTab === 'login' ? '2px solid var(--primary)' : '2px solid transparent',
-              }}
-              onClick={() => { setActiveTab('login'); setError(''); }}
-            >
-              Log In
-            </button>
-            <button 
-              type="button"
-              style={{
-                ...styles.tabBtn,
-                color: activeTab === 'signup' ? 'var(--text-primary)' : 'var(--text-muted)',
-                borderBottom: activeTab === 'signup' ? '2px solid var(--primary)' : '2px solid transparent',
-              }}
-              onClick={() => { setActiveTab('signup'); setError(''); }}
-            >
-              Sign Up
-            </button>
+        <div className="glass-card auth-card" style={{ gap: '20px', padding: '36px 32px' }}>
+          <div style={{ textAlign: 'center', marginBottom: '8px' }}>
+            <h2 style={{ fontSize: '1.25rem', fontWeight: '700', marginBottom: '6px', color: 'var(--text-primary)' }}>Welcome to DocAI</h2>
+            <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Sign in with Google to enter your workspace</p>
           </div>
 
           {error && (
@@ -376,58 +356,7 @@ export function HomePage({ onLoginSuccess, theme, toggleTheme, Sun, Moon }) {
             </div>
           )}
 
-          <form style={styles.demoForm} onSubmit={handleSubmit}>
-            {activeTab === 'signup' && (
-              <input 
-                type="text" 
-                placeholder="Full Name" 
-                required 
-                style={styles.input}
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                onFocus={(e) => e.target.style.borderColor = 'var(--primary)'}
-                onBlur={(e) => e.target.style.borderColor = 'var(--border)'}
-              />
-            )}
-            <input 
-              type="email" 
-              placeholder="Email Address" 
-              required 
-              style={styles.input}
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              onFocus={(e) => e.target.style.borderColor = 'var(--primary)'}
-              onBlur={(e) => e.target.style.borderColor = 'var(--border)'}
-            />
-            <input 
-              type="password" 
-              placeholder="Password" 
-              required 
-              style={styles.input}
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              onFocus={(e) => e.target.style.borderColor = 'var(--primary)'}
-              onBlur={(e) => e.target.style.borderColor = 'var(--border)'}
-            />
-            <button type="submit" style={styles.demoBtn} disabled={loading}>
-              {loading ? (
-                <span>Loading...</span>
-              ) : (
-                <>
-                  <span>{activeTab === 'login' ? 'Enter Workspace' : 'Create Account'}</span>
-                  <ChevronRight size={16} />
-                </>
-              )}
-            </button>
-          </form>
-
-          <div style={styles.divider}>
-            <div style={styles.dividerLine} />
-            <span style={styles.dividerText}>or</span>
-            <div style={styles.dividerLine} />
-          </div>
-
-          <div id="google-signin-btn" style={{ width: '100%', display: 'flex', justifyContent: 'center' }} />
+          <div id="google-signin-btn" style={{ width: '100%', display: 'flex', justifyContent: 'center', margin: '8px 0' }} />
         </div>
       </div>
 
