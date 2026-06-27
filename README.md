@@ -56,8 +56,6 @@ app/
 
 │── database.py
 
-│── config.py
-
 │── main.py
 ```
 
