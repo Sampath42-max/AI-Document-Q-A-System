@@ -183,6 +183,10 @@ class ApiService {
     const user = this.getCurrentUser();
     const userId = user ? user.id : 'default';
 
+    if (this.isOffline) {
+      return mockDb.getDocuments(userId);
+    }
+
     try {
       const response = await fetch(`${BACKEND_URL}/documents`, {
         headers: this.getAuthHeaders()
@@ -199,7 +203,6 @@ class ApiService {
     } catch (error) {
       console.error('[API] Error in getDocuments, falling back to mock:', error);
       
-      // Keep isOffline flag updated
       const wasOffline = this.isOffline;
       this.isOffline = true;
       if (!wasOffline) this.notifyListeners();
@@ -220,11 +223,29 @@ class ApiService {
     if (isTextFile) {
       fileContent = await new Promise((resolve) => {
         const reader = new FileReader();
-        reader.onload = (e) => resolve(e.target.result);
+        reader.onload = (e) => resolve(e.target.result || '');
+        reader.onerror = () => resolve('');
         reader.readAsText(file);
       });
     } else {
       fileContent = `# Mock Text Content for ${file.name}\n\nThis is a binary file (PDF/Docx/etc.) parsed client-side. Detailed mock responses will be simulated for this document.`;
+    }
+
+    if (this.isOffline) {
+      // Simulate network uploading progress for mock
+      let progress = 0;
+      const interval = setInterval(() => {
+        progress += 20;
+        if (onProgress) onProgress(progress);
+        if (progress >= 100) {
+          clearInterval(interval);
+        }
+      }, 150);
+
+      const user = this.getCurrentUser();
+      const userId = user ? user.id : 'default';
+      await new Promise(resolve => setTimeout(resolve, 800)); // Sim processing latency
+      return mockDb.addDocument(file.name, fileContent, file.size, file.type, userId);
     }
 
     try {
@@ -284,6 +305,10 @@ class ApiService {
 
   // 3. Delete Document
   async deleteDocument(id) {
+    if (this.isOffline) {
+      return mockDb.deleteDocument(id);
+    }
+
     try {
       const response = await fetch(`${BACKEND_URL}/document/${id}`, {
         method: 'DELETE',
@@ -311,6 +336,49 @@ class ApiService {
 
   // 4. Query / Chat with Document
   async queryDocument(docId, query, onChunk) {
+    if (this.isOffline) {
+      // Simulate local mock Q&A response
+      const mockAnswers = [
+        `Based on the uploaded document, the query "${query}" relates to several key points found in the text.`,
+        `According to the document references, we can see that "${query}" is discussed in detail, highlighting the main architecture and systems.`,
+        `Analyzing the document content, "${query}" represents one of the core subjects, particularly detailed in the initial sections.`
+      ];
+      const answer = mockAnswers[Math.floor(Math.random() * mockAnswers.length)] + "\n\n* This is a simulated response generated locally because the FastAPI backend is offline.\n* Citations point to the mock document chunks.";
+      
+      const doc = mockDb.documents.find(d => d.id === docId);
+      const citations = [];
+      if (doc && doc.paragraphs && doc.paragraphs.length > 0) {
+        const numCitations = Math.min(2, doc.paragraphs.length);
+        for (let i = 0; i < numCitations; i++) {
+          citations.push({
+            index: i,
+            snippet: doc.paragraphs[i].substring(0, 120) + "..."
+          });
+        }
+      }
+
+      const history = mockDb.getChats(docId);
+      const newMessages = [
+        ...history,
+        { role: 'user', content: query, timestamp: new Date().toISOString() },
+        { role: 'assistant', content: answer, citations: citations, timestamp: new Date().toISOString() }
+      ];
+      mockDb.saveChats(docId, newMessages);
+
+      if (onChunk) {
+        onChunk({
+          answer: answer,
+          citations: citations,
+          done: true
+        });
+      }
+
+      return {
+        answer,
+        citations
+      };
+    }
+
     try {
       const response = await fetch(`${BACKEND_URL}/chat`, {
         method: 'POST',
@@ -354,12 +422,55 @@ class ApiService {
       this.isOffline = true;
       if (!wasOffline) this.notifyListeners();
       
-      throw error;
+      // Fallback local mock query response when network fails
+      const mockAnswers = [
+        `Based on the uploaded document, the query "${query}" relates to several key points found in the text.`,
+        `According to the document references, we can see that "${query}" is discussed in detail, highlighting the main architecture and systems.`,
+        `Analyzing the document content, "${query}" represents one of the core subjects, particularly detailed in the initial sections.`
+      ];
+      const answer = mockAnswers[Math.floor(Math.random() * mockAnswers.length)] + "\n\n* This is a simulated response generated locally because the FastAPI backend is offline.\n* Citations point to the mock document chunks.";
+      
+      const doc = mockDb.documents.find(d => d.id === docId);
+      const citations = [];
+      if (doc && doc.paragraphs && doc.paragraphs.length > 0) {
+        const numCitations = Math.min(2, doc.paragraphs.length);
+        for (let i = 0; i < numCitations; i++) {
+          citations.push({
+            index: i,
+            snippet: doc.paragraphs[i].substring(0, 120) + "..."
+          });
+        }
+      }
+
+      const history = mockDb.getChats(docId);
+      const newMessages = [
+        ...history,
+        { role: 'user', content: query, timestamp: new Date().toISOString() },
+        { role: 'assistant', content: answer, citations: citations, timestamp: new Date().toISOString() }
+      ];
+      mockDb.saveChats(docId, newMessages);
+
+      if (onChunk) {
+        onChunk({
+          answer: answer,
+          citations: citations,
+          done: true
+        });
+      }
+
+      return {
+        answer,
+        citations
+      };
     }
   }
 
   // 5. Get Chats History
   async getChats(docId) {
+    if (this.isOffline) {
+      return mockDb.getChats(docId);
+    }
+
     try {
       const response = await fetch(`${BACKEND_URL}/history/${docId}`, {
         headers: this.getAuthHeaders()
@@ -387,6 +498,10 @@ class ApiService {
   // 6. Clear Chats
   async clearChats(docId) {
     mockDb.clearChats(docId); // sync local
+    if (this.isOffline) {
+      return true;
+    }
+
     try {
       const response = await fetch(`${BACKEND_URL}/history/${docId}`, { 
         method: 'DELETE', 

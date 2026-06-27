@@ -4,7 +4,7 @@ import { apiService } from '../services/api';
 
 const styles = {
   container: {
-    minHeight: '100vh',
+    height: '100vh',
     width: '100vw',
     backgroundColor: 'var(--bg-main)',
     color: 'var(--text-primary)',
@@ -13,19 +13,6 @@ const styles = {
     position: 'relative',
     overflowY: 'auto',
     fontFamily: 'var(--font-body)',
-  },
-  header: {
-    height: '80px',
-    padding: '0 40px',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    borderBottom: '1px solid var(--border)',
-    background: 'var(--bg-topnav)',
-    backdropFilter: 'blur(20px)',
-    position: 'sticky',
-    top: 0,
-    zIndex: 10,
   },
   logoGroup: {
     display: 'flex',
@@ -53,16 +40,6 @@ const styles = {
     WebkitBackgroundClip: 'text',
     WebkitTextFillColor: 'transparent',
   },
-  heroSection: {
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: '100px 24px 60px 24px',
-    textAlign: 'center',
-    flex: 1,
-    zIndex: 2,
-  },
   heroBadge: {
     display: 'inline-flex',
     alignItems: 'center',
@@ -75,37 +52,6 @@ const styles = {
     fontSize: '0.8rem',
     fontWeight: '600',
     marginBottom: '24px',
-  },
-  title: {
-    fontSize: '3.5rem',
-    fontWeight: '800',
-    lineHeight: '1.2',
-    maxWidth: '850px',
-    marginBottom: '20px',
-    fontFamily: 'var(--font-heading)',
-    background: 'linear-gradient(135deg, var(--text-primary) 30%, var(--text-secondary) 100%)',
-    WebkitBackgroundClip: 'text',
-    WebkitTextFillColor: 'transparent',
-  },
-  subtitle: {
-    fontSize: '1.15rem',
-    color: 'var(--text-secondary)',
-    maxWidth: '600px',
-    lineHeight: '1.6',
-    marginBottom: '40px',
-  },
-  authCard: {
-    padding: '32px',
-    width: '100%',
-    maxWidth: '400px',
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    gap: '24px',
-    borderRadius: 'var(--radius-xl)',
-    background: 'var(--bg-card)',
-    border: '1px solid var(--border)',
-    boxShadow: 'var(--shadow-lg)',
   },
   tabContainer: {
     display: 'flex',
@@ -200,16 +146,6 @@ const styles = {
     gap: '8px',
     boxShadow: '0 4px 15px rgba(123, 97, 255, 0.25)',
   },
-  featuresSection: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-    gap: '24px',
-    padding: '60px 40px 100px 40px',
-    maxWidth: '1200px',
-    width: '100%',
-    margin: '0 auto',
-    zIndex: 2,
-  },
   featureCard: {
     padding: '24px',
     display: 'flex',
@@ -260,6 +196,13 @@ export function HomePage({ onLoginSuccess, theme, toggleTheme, Sun, Moon }) {
   const [name, setName] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [windowWidth, setWindowWidth] = useState(typeof window !== 'undefined' ? window.innerWidth : 0);
+
+  useEffect(() => {
+    const handleResize = () => setWindowWidth(window.innerWidth);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -308,12 +251,24 @@ export function HomePage({ onLoginSuccess, theme, toggleTheme, Sun, Moon }) {
             }
           });
           
+          const btnParent = document.getElementById("google-signin-btn");
+          let buttonWidth = 336;
+          if (btnParent && btnParent.parentElement) {
+            const parentStyle = window.getComputedStyle(btnParent.parentElement);
+            const paddingLeft = parseFloat(parentStyle.paddingLeft) || 0;
+            const paddingRight = parseFloat(parentStyle.paddingRight) || 0;
+            const contentWidth = btnParent.parentElement.clientWidth - paddingLeft - paddingRight;
+            if (contentWidth > 0) {
+              buttonWidth = Math.min(336, Math.max(200, contentWidth));
+            }
+          }
+
           google.accounts.id.renderButton(
-            document.getElementById("google-signin-btn"),
+            btnParent,
             { 
               theme: theme === 'dark' ? "filled_black" : "outline", 
               size: "large", 
-              width: 336,
+              width: buttonWidth,
               text: activeTab === 'login' ? 'signin_with' : 'signup_with'
             }
           );
@@ -335,7 +290,7 @@ export function HomePage({ onLoginSuccess, theme, toggleTheme, Sun, Moon }) {
     return () => {
       if (checkInterval) clearInterval(checkInterval);
     };
-  }, [theme, activeTab, onLoginSuccess]);
+  }, [theme, activeTab, onLoginSuccess, windowWidth]);
 
   return (
     <div style={styles.container}>
@@ -366,7 +321,7 @@ export function HomePage({ onLoginSuccess, theme, toggleTheme, Sun, Moon }) {
       }} />
 
       {/* Header */}
-      <header style={styles.header}>
+      <header className="homepage-header">
         <div style={styles.logoGroup}>
           <div style={styles.logoIcon}>D</div>
           <div style={styles.logoText}>DocAI</div>
@@ -377,19 +332,19 @@ export function HomePage({ onLoginSuccess, theme, toggleTheme, Sun, Moon }) {
       </header>
 
       {/* Hero Section */}
-      <div style={styles.heroSection}>
+      <div className="hero-section">
         <div style={styles.heroBadge}>
           <Sparkles size={13} color="var(--secondary)" />
           <span>Intelligent Document Workspace</span>
         </div>
-        <h1 style={styles.title}>Chat with Your Documents Instantly</h1>
-        <p style={styles.subtitle}>
+        <h1 className="hero-title">Chat with Your Documents Instantly</h1>
+        <p className="hero-subtitle">
           Upload PDFs, DOCX, or text files and query them with AI. 
           Get instant summaries, context-aware answers, and direct page references.
         </p>
 
         {/* Login Card */}
-        <div className="glass-card" style={styles.authCard}>
+        <div className="glass-card auth-card">
           <div style={styles.tabContainer}>
             <button 
               type="button"
@@ -477,7 +432,7 @@ export function HomePage({ onLoginSuccess, theme, toggleTheme, Sun, Moon }) {
       </div>
 
       {/* Features Grid */}
-      <div style={styles.featuresSection}>
+      <div className="features-section">
         <div className="glass-card" style={styles.featureCard}>
           <div style={styles.featureIconWrapper}>
             <MessageSquare size={18} />

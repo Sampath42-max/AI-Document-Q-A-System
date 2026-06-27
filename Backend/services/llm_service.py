@@ -22,9 +22,10 @@ Guidelines:
 1. Provide a professional, direct, and well-structured answer.
 2. If the user is asking about the document metadata (such as authors, title, affiliations, abstract) or asking for a general summary, synthesize a complete answer using the retrieved context (which contains the start of the document).
 3. Do not assume or hallucinate details. Only reference facts present in the context.
-4. If the answer is completely missing from the context and cannot be inferred, output: "I could not find the answer in the document."
-5. Use bracketed citation numbers (like [1], [2], etc.) in your answer to cite the source passages from the context. Only use the numbers provided in the context.
-
+4. Citation handling:
+   - If the provided context includes bracketed source markers (e.g., [1], [2]), use them to cite the passages that support your answer. Only use numbers that actually appear in the context — never invent or renumber them.
+   - If the context does NOT include bracketed source markers (e.g., for document formats where citations aren't generated), do not fabricate citation numbers. Instead, answer directly from the context without bracketed references, optionally noting which section, heading, or page the information came from if that detail is available in the text.
+5. If the answer cannot be found in the provided context, say so clearly rather than guessing.
 Context:
 {context}
 

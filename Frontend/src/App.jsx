@@ -443,13 +443,17 @@ const appStyles = {
 
 function App() {
   const [documents, setDocuments] = useState([]);
-  const [activeDocId, setActiveDocId] = useState(null);
+  const [activeDocId, setActiveDocId] = useState(() => {
+    return localStorage.getItem('docai_active_doc_id') || null;
+  });
   const [messages, setMessages] = useState([]);
   const [isGenerating, setIsGenerating] = useState(false);
   const [highlightedParagraphIndex, setHighlightedParagraphIndex] = useState(null);
   const [isOffline, setIsOffline] = useState(true);
   const [toasts, setToasts] = useState([]);
-  const [activeTab, setActiveTab] = useState('dashboard');
+  const [activeTab, setActiveTab] = useState(() => {
+    return localStorage.getItem('docai_active_tab') || 'dashboard';
+  });
   const [searchQuery, setSearchQuery] = useState('');
   const [theme, setTheme] = useState(() => {
     return localStorage.getItem('theme') || 'dark';
@@ -464,6 +468,8 @@ function App() {
     setDocuments([]);
     setActiveDocId(null);
     setMessages([]);
+    localStorage.removeItem('docai_active_doc_id');
+    localStorage.removeItem('docai_active_tab');
     console.log('[App] handleLogout complete. User state set to null.');
   };
 
@@ -471,6 +477,18 @@ function App() {
     document.documentElement.setAttribute('data-theme', theme);
     localStorage.setItem('theme', theme);
   }, [theme]);
+
+  useEffect(() => {
+    if (activeDocId) {
+      localStorage.setItem('docai_active_doc_id', activeDocId);
+    } else {
+      localStorage.removeItem('docai_active_doc_id');
+    }
+  }, [activeDocId]);
+
+  useEffect(() => {
+    localStorage.setItem('docai_active_tab', activeTab);
+  }, [activeTab]);
 
   useEffect(() => {
     if (!showProfileMenu) return;
@@ -518,9 +536,14 @@ function App() {
         const docs = await apiService.getDocuments();
         setDocuments(docs);
         
-        // Auto-select first document if available, but stay on dashboard
-        if (docs.length > 0 && !activeDocId) {
-          setActiveDocId(docs[0].id);
+        // Restore activeDocId if it exists in loaded docs, otherwise select first doc or reset
+        if (docs.length > 0) {
+          const hasActiveDoc = docs.some(doc => doc.id === activeDocId);
+          if (!activeDocId || !hasActiveDoc) {
+            setActiveDocId(docs[0].id);
+          }
+        } else {
+          setActiveDocId(null);
         }
       } catch (e) {
         showToast('Failed to load documents', 'error');

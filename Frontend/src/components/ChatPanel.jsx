@@ -199,8 +199,12 @@ const styles = {
     fontFamily: 'var(--font-body)',
     resize: 'none',
     height: '24px',
+    minHeight: '24px',
     outline: 'none',
     maxHeight: '120px',
+    padding: '2px 0',
+    lineHeight: '1.4',
+    overflowY: 'auto',
   },
   sendBtn: {
     background: 'var(--primary)',
@@ -249,73 +253,131 @@ const styles = {
 function AssistantResponseCard({ content, citations, onCitationClick }) {
   const [showSources, setShowSources] = useState(false);
 
-  // Custom AI Response Citations bracket matching e.g. [1], [2]
-  const formatAiResponse = (text, cits = []) => {
-    if (!text) return '';
-    const citationRegex = /\[(\d+)\]/g;
-    const parts = text.split(citationRegex);
-    
-    if (parts.length === 1) {
-      return renderMarkdownLine(text);
-    }
+  const renderInlineContent = (text, cits = []) => {
+    if (!text) return null;
 
-    return parts.map((part, i) => {
-      if (i % 2 === 1) {
-        const citationNumber = parseInt(part, 10);
-        const citation = cits[citationNumber - 1];
-        const targetIdx = citation ? citation.index : null;
-        
-        return (
-          <span 
-            key={i} 
-            style={styles.citationPill}
-            onClick={() => targetIdx !== null && onCitationClick(targetIdx)}
-            title={citation ? citation.snippet : `View Paragraph ${citationNumber}`}
-          >
-            [{citationNumber}]
-          </span>
-        );
-      }
-      return renderMarkdownLine(part);
+    const boldRegex = /\*\*([^*]+)\*\*/g;
+    const boldParts = text.split(boldRegex);
+
+    return boldParts.flatMap((part, boldIdx) => {
+      const isBold = boldIdx % 2 === 1;
+      const citationRegex = /\[(\d+)\]/g;
+      const citationParts = part.split(citationRegex);
+
+      return citationParts.map((subPart, citIdx) => {
+        const isCitation = citIdx % 2 === 1;
+
+        if (isCitation) {
+          const citationNumber = parseInt(subPart, 10);
+          const citation = cits[citationNumber - 1];
+          const targetIdx = citation ? citation.index : null;
+
+          return (
+            <span 
+              key={`cit-${boldIdx}-${citIdx}`} 
+              style={styles.citationPill}
+              onClick={() => targetIdx !== null && onCitationClick(targetIdx)}
+              title={citation ? citation.snippet : `View Paragraph ${citationNumber}`}
+            >
+              [{citationNumber}]
+            </span>
+          );
+        }
+
+        if (isBold) {
+          return (
+            <strong key={`bold-${boldIdx}-${citIdx}`} style={{ color: 'var(--text-primary)', fontWeight: '600' }}>
+              {subPart}
+            </strong>
+          );
+        }
+        return subPart;
+      });
     });
   };
 
-  const renderMarkdownLine = (text) => {
+  // Custom AI Response Citations bracket matching e.g. [1], [2]
+  const formatAiResponse = (text, cits = []) => {
+    if (!text) return '';
     const lines = text.split('\n');
-    return lines.map((line, lineIdx) => {
-      let cleanLine = line;
-      const boldParts = line.split(/\*\*([^*]+)\*\*/g);
-      
-      const renderLineContent = () => {
-        if (boldParts.length === 1) {
-          return line;
-        }
-        return boldParts.map((bPart, bIdx) => 
-          bIdx % 2 === 1 ? <strong key={bIdx} style={{ color: '#ffffff' }}>{bPart}</strong> : bPart
-        );
-      };
+    const elements = [];
+    let currentListItems = [];
 
-      if (line.trim().startsWith('* ') || line.trim().startsWith('- ')) {
-        const sliced = line.trim().substring(2);
-        const bulletBoldParts = sliced.split(/\*\*([^*]+)\*\*/g);
-        
-        return (
-          <ul key={lineIdx} style={{ paddingLeft: '16px', margin: '4px 0' }}>
-            <li style={{ listStyleType: 'disc', color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
-              {bulletBoldParts.length === 1 ? sliced : bulletBoldParts.map((bPart, bIdx) => 
-                bIdx % 2 === 1 ? <strong key={bIdx} style={{ color: '#ffffff' }}>{bPart}</strong> : bPart
-              )}
-            </li>
+    const flushList = (key) => {
+      if (currentListItems.length > 0) {
+        elements.push(
+          <ul key={`list-${key}`} style={{ paddingLeft: '20px', margin: '8px 0', listStyleType: 'disc' }}>
+            {currentListItems}
           </ul>
         );
+        currentListItems = [];
       }
+    };
 
-      return (
-        <span key={lineIdx} style={{ display: 'block', marginBottom: line === '' ? '12px' : '4px' }}>
-          {renderLineContent()}
-        </span>
-      );
+    lines.forEach((line, lineIdx) => {
+      const trimmed = line.trim();
+      
+      if (trimmed.startsWith('* ') || trimmed.startsWith('- ')) {
+        const contentStr = line.replace(/^\s*[\*\-]\s+/, '');
+        currentListItems.push(
+          <li 
+            key={`li-${lineIdx}`} 
+            style={{ 
+              color: 'var(--text-secondary)', 
+              fontSize: '0.875rem', 
+              lineHeight: '1.6', 
+              marginBottom: '4px' 
+            }}
+          >
+            {renderInlineContent(contentStr, cits)}
+          </li>
+        );
+      } else if (/^\d+\.\s+/.test(trimmed)) {
+        flushList(lineIdx);
+        const contentStr = trimmed.replace(/^\d+\.\s+/, '');
+        const matchNumber = trimmed.match(/^\d+\./)[0];
+        elements.push(
+          <div 
+            key={`ol-li-${lineIdx}`} 
+            style={{ 
+              paddingLeft: '20px', 
+              textIndent: '-20px', 
+              color: 'var(--text-secondary)', 
+              fontSize: '0.875rem', 
+              lineHeight: '1.6', 
+              margin: '6px 0' 
+            }}
+          >
+            <strong>{matchNumber} </strong>
+            {renderInlineContent(contentStr, cits)}
+          </div>
+        );
+      } else if (trimmed === '' || trimmed === '.') {
+        flushList(lineIdx);
+        if (trimmed === '') {
+          elements.push(<div key={`space-${lineIdx}`} style={{ height: '8px' }} />);
+        }
+      } else {
+        flushList(lineIdx);
+        elements.push(
+          <p 
+            key={`p-${lineIdx}`} 
+            style={{ 
+              color: 'var(--text-primary)', 
+              fontSize: '0.875rem', 
+              lineHeight: '1.6', 
+              margin: '8px 0',
+              wordBreak: 'break-word'
+            }}
+          >
+            {renderInlineContent(trimmed, cits)}
+          </p>
+        );
+      }
     });
+
+    flushList('end');
+    return elements;
   };
 
   return (
@@ -396,7 +458,7 @@ export function ChatPanel({
     setInputValue(e.target.value);
     if (textareaRef.current) {
       textareaRef.current.style.height = 'auto';
-      textareaRef.current.style.height = `${Math.min(textareaRef.current.scrollHeight, 120) - 10}px`;
+      textareaRef.current.style.height = `${Math.min(textareaRef.current.scrollHeight, 120)}px`;
     }
   };
 
