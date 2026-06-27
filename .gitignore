@@ -14,3 +14,8 @@ Frontend/.env
 .idea/
 .DS_Store
 *.log
+
+# Database files
+Backend/database.json
+Backend/database.db
+
