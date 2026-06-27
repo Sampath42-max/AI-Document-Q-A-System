@@ -245,6 +245,7 @@ const styles = {
     display: 'flex',
     flexDirection: 'column',
     minWidth: 0,
+    flex: 1,
   },
   userName: {
     fontSize: '0.8rem',
@@ -258,6 +259,9 @@ const styles = {
     fontSize: '0.65rem',
     color: 'var(--secondary)',
     fontWeight: '500',
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+    whiteSpace: 'nowrap',
   }
 };
 
