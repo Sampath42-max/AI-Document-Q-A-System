@@ -1,7 +1,7 @@
 // Hybrid Service: Backend API Adapter with Client-side Mock Fallback
 import { mockDb } from './mockDb';
 
-const BACKEND_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+const BACKEND_URL = import.meta.env.VITE_API_URL || 'https://ai-document-q-a-system-j8w8.onrender.com';
 
 class ApiService {
   constructor() {
