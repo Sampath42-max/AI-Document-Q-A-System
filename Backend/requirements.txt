@@ -25,3 +25,4 @@ lxml==6.1.1
 langchain-text-splitters==1.1.2
 pandas==3.0.3
 pyspellchecker==0.8.3
+chromadb==1.5.9
